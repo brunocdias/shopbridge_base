@@ -1,23 +1,26 @@
-using Microsoft.AspNetCore.Authentication;
+using FluentValidation.AspNetCore;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+using Shopbridge_base.Application.Commands.PostProduct;
+using Shopbridge_base.Application.Queries.GetProduct;
 using Shopbridge_base.Data;
-using Shopbridge_base.Domain.Services.Interfaces;
+using Shopbridge_base.Data.Repository;
+using Shopbridge_base.Domain.Models;
 using Shopbridge_base.Domain.Services;
+using Shopbridge_base.Domain.Services.Interfaces;
+using Shopbridge_base.Infrastructure.Extensions;
+using Shopbridge_base.Infrastructure.Utils;
+using System.Reflection;
+
 
 namespace Shopbridge_base
 {
@@ -42,10 +45,20 @@ namespace Shopbridge_base
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Shopbridge_base", Version = "v1" });
             });
 
-            services.AddDbContext<Shopbridge_Context>(options =>
-                    options.UseSqlServer(Configuration.GetConnectionString("Shopbridge_Context")));
+            
+            /*services.AddDbContext<Shopbridge_Context>(options =>
+                    options.UseSqlServer("Server=.\\BRUNOTESTE;Initial Catalog=testeproduct;MultipleActiveResultSets=true;User ID=sa; Password:Bruno1994;"));
+            */
+            services.AddDbContext<Shopbridge_Context>(option =>
+                option.UseSqlServer(Configuration.GetConnectionString("Shopbridge_Context")));
 
             services.AddScoped<IProductService, ProductService>();
+
+            services.AddAutoMapper(Assembly.GetAssembly(typeof(ApplicationProfile)));
+            services.AddFluentValidation(typeof(FluentValidationExtension));
+            services.AddTransient<IRepository<Product>, Repository<Product>>();
+            services.AddMediatR(typeof(Startup));
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -68,7 +81,9 @@ namespace Shopbridge_base
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-            });
+            });           
+            
+
         }
     }
 }
